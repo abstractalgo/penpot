@@ -40,13 +40,6 @@ $height-palette-max: 80px;
     overflow-x: hidden;
   }
 
-  .settings-bar.settings-bar-left {
-    min-width: $width-settings-bar;
-    max-width: 500px;
-    width: var(--width, $width-settings-bar);
-    grid-area: left-sidebar;
-  }
-
   .settings-bar.settings-bar-right {
     transition: width 0.2s;
     min-width: $width-settings-bar;

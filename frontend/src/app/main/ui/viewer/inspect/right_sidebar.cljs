@@ -9,7 +9,7 @@
    [app.main.data.workspace :as dw]
    [app.main.store :as st]
    [app.main.ui.components.shape-icon :as si]
-   [app.main.ui.components.tab-container :refer [tab-container tab-element]]
+   [app.main.ui.components.tabs-container :refer [tabs-container tab-element]]
    [app.main.ui.icons :as i]
    [app.main.ui.viewer.inspect.attributes :refer [attributes]]
    [app.main.ui.viewer.inspect.code :refer [code]]
@@ -56,7 +56,7 @@
              ;;   inspect.tabs.code.selected.text
              [:span.tool-window-bar-title (:name first-shape)]])]
          [:div.tool-window-content.inspect
-          [:& tab-container {:on-change-tab #(do
+          [:& tabs-container {:on-change-tab #(do
                                                (reset! expanded false)
                                                (reset! section %)
                                                (when (= from :workspace)

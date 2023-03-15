@@ -4,22 +4,22 @@
 ;;
 ;; Copyright (c) KALEIDOS INC
 
-(ns app.main.ui.workspace.sidebar
+(ns app.main.ui.workspace.sidebar.component.sidebar
+  (:require-macros [app.main.style :refer [css styles]])
   (:require
    [app.main.data.workspace :as dw]
    [app.main.refs :as refs]
    [app.main.store :as st]
-   [app.main.ui.components.tab-container :refer [tab-container tab-element]]
+   [app.main.ui.components.tab-container.tab-container :refer [tab-container tab-element]]
    [app.main.ui.hooks.resize :refer [use-resize-hook]]
-   [app.main.ui.icons :as i]
    [app.main.ui.workspace.comments :refer [comments-sidebar]]
    [app.main.ui.workspace.sidebar.assets :refer [assets-toolbox]]
    [app.main.ui.workspace.sidebar.debug :refer [debug-panel]]
    [app.main.ui.workspace.sidebar.history :refer [history-toolbox]]
-   [app.main.ui.workspace.sidebar.layers :refer [layers-toolbox]]
+   [app.main.ui.workspace.sidebar.layers.layers :refer [layers-toolbox]]
    [app.main.ui.workspace.sidebar.options :refer [options-toolbox]]
    [app.main.ui.workspace.sidebar.shortcuts :refer [shortcuts-container]]
-   [app.main.ui.workspace.sidebar.sitemap :refer [sitemap]]
+   [app.main.ui.workspace.sidebar.sitemap.sitemap :refer [sitemap]]
    [app.util.dom :as dom]
    [app.util.i18n :refer [tr]]
    [app.util.object :as obj]
@@ -44,17 +44,14 @@
         (fn []
           (st/emit! (dw/toggle-layout-flag :collapse-left-sidebar)))]
 
-    [:aside.settings-bar.settings-bar-left {:ref parent-ref
-                                            :class (dom/classnames
-                                                    :two-row   (<= size 300)
-                                                    :three-row (and (> size 300) (<= size 400))
-                                                    :four-row  (> size 400))
-                                            :style #js {"--width" (str size "px")}}
-     [:div.resize-area {:on-pointer-down on-pointer-down
-                        :on-lost-pointer-capture on-lost-pointer-capture
-                        :on-pointer-move on-pointer-move}]
-
-     [:div.settings-bar-inside
+    [:aside {:ref parent-ref
+             :class (dom/classnames (css :left-settings-bar) true)
+             :style #js {"--width" (str size "px")}}
+     [:div {:on-pointer-down on-pointer-down
+            :on-lost-pointer-capture on-lost-pointer-capture
+            :on-pointer-move on-pointer-move
+            :class (dom/classnames (css :resize-area) true)}]
+     [:div {:class (dom/classnames (css :settings-bar-inside) true)}
       (cond
         shortcuts?
         [:& shortcuts-container]
@@ -64,18 +61,16 @@
 
         :else
         [:*
-         [:button.collapse-sidebar
-          {:on-click handle-collapse
-           :aria-label (tr "workspace.sidebar.collapse")}
-          i/arrow-slide]
          [:& tab-container {:on-change-tab #(st/emit! (dw/go-to-layout %))
                             :selected section
-                            :shortcuts? shortcuts?}
-
-          [:& tab-element {:id :layers :title (tr "workspace.sidebar.layers")}
-           [:div.layers-tab
+                            :shortcuts? shortcuts?
+                            :collapsable? true
+                            :handle-collapse handle-collapse}
+          [:& tab-element {:id :layers
+                           :title (tr "workspace.sidebar.layers")}
+           [:div {:class (dom/classnames (css :layers-tab) true)}
             [:& sitemap {:layout layout}]
-            [:& layers-toolbox]]]
+            [:& layers-toolbox {:size-parent size}]]]
 
           (when-not mode-inspect?
             [:& tab-element {:id :assets :title (tr "workspace.toolbar.assets")}
@@ -104,8 +99,8 @@
     (mf/use-effect
      (mf/deps can-be-expanded?)
      (fn []
-      (when (not can-be-expanded?)
-        (st/emit! (dw/set-inspect-expanded false)))))
+       (when (not can-be-expanded?)
+         (st/emit! (dw/set-inspect-expanded false)))))
 
     [:aside.settings-bar.settings-bar-right {:class (when (and can-be-expanded? expanded?) "expanded")}
      [:div.settings-bar-inside

@@ -74,89 +74,6 @@
       align-items: center;
     }
   }
-
-  .element-list {
-    margin-bottom: $size-2;
-
-    li {
-      align-items: center;
-      border-bottom: 1px solid $color-gray-60;
-      display: flex;
-      flex-direction: row;
-      padding: $size-2;
-      width: 100%;
-
-      .list-icon {
-        svg {
-          fill: $color-gray-30;
-          height: 15px;
-          margin-right: $size-1;
-          width: 15px;
-        }
-      }
-
-      span {
-        color: $color-gray-20;
-        font-size: $fs12;
-        max-width: 75%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .list-actions {
-        align-items: center;
-        cursor: pointer;
-        display: none;
-        margin-left: auto;
-
-        a {
-          svg {
-            fill: $color-gray-60;
-            height: 15px;
-            margin-left: $size-1;
-            width: 15px;
-
-            &:hover {
-              fill: $color-gray-20;
-            }
-          }
-        }
-      }
-
-      &:hover {
-        .list-icon {
-          svg {
-            fill: $color-primary;
-          }
-        }
-
-        span {
-          color: $color-primary;
-        }
-      }
-
-      &.selected {
-        .list-icon {
-          svg {
-            fill: $color-primary;
-          }
-        }
-
-        span {
-          color: $color-primary;
-          font-weight: $fw700;
-        }
-      }
-    }
-
-    &:hover {
-      .list-actions {
-        display: flex;
-        @include animation(0s, 0.3s, fadeIn);
-      }
-    }
-  }
 }
 
 .element-set-content {
@@ -353,13 +270,13 @@
       font-size: $fs14;
       display: flex;
       gap: 0 10px;
-      justify-content: start;
+      justify-content: flex-start;
       padding: $size-2;
 
       span {
         color: $color-gray-20;
         display: flex;
-        justify-content: start;
+        justify-content: flex-start;
         align-items: center;
       }
 
@@ -1643,7 +1560,7 @@
     .row-title {
       font-size: $fs12;
       display: flex;
-      justify-content: start;
+      justify-content: flex-start;
       align-items: center;
       margin-right: 5px;
       font-family: "worksans", sans-serif;
@@ -1651,13 +1568,13 @@
       &.justify-content,
       &.align-content,
       &.sizing {
-        align-items: start;
+        align-items: flex-start;
         margin-top: 4px;
       }
 
       &.align-items-grid,
       &.jusfiy-content-grid {
-        align-items: start;
+        align-items: flex-start;
         margin-top: 11px;
       }
     }
@@ -2300,7 +2217,7 @@
   padding: 0;
   .icon {
     display: flex;
-    justify-content: start;
+    justify-content: flex-start;
     align-items: center;
     margin-right: 10px;
     svg {

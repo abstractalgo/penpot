@@ -4,7 +4,8 @@
 ;;
 ;; Copyright (c) KALEIDOS INC
 
-(ns app.main.ui.components.context-menu-a11y
+(ns app.main.ui.components.context-menu-a11y.context-menu-a11y
+  (:require-macros [app.main.style :refer [css styles]])
   (:require
    [app.common.data :as d]
    [app.common.data.macros :as dm]
@@ -36,7 +37,7 @@
         on-click    (gobj/get props "on-click")
         on-key-down (gobj/get props "on-key-down")
         id          (gobj/get props "id")
-        klass       (gobj/get props "klass")
+        klass       (gobj/get props "class")
         key         (gobj/get props "key")
         data-test   (gobj/get props "data-test")]
     [:li {:id id
@@ -54,7 +55,7 @@
   [props]
   (assert (fn? (gobj/get props "on-close")) "missing `on-close` prop")
   (assert (boolean? (gobj/get props "show")) "missing `show` prop")
-  (assert (vector? (gobj/get props "options")) "missing `options` prop") 
+  (assert (vector? (gobj/get props "options")) "missing `options` prop")
   (let [open?         (gobj/get props "show")
         on-close      (gobj/get props "on-close")
         options       (gobj/get props "options")
@@ -64,6 +65,7 @@
         left          (gobj/get props "left" 0)
         fixed?        (gobj/get props "fixed?" false)
         min-width?    (gobj/get props "min-width?" false)
+        workspace?    (gobj/get props "workspace?" false)
         origin        (gobj/get props "origin")
         route         (mf/deref refs/route)
         in-dashboard? (= :dashboard-projects (:name (:data route)))
@@ -79,7 +81,7 @@
            (on-close)))
 
         props (obj/merge props #js {:on-close on-local-close})
-        
+
         ids (generate-ids-group (:options (last (:levels @local))) (:parent-option (last (:levels @local))))
         check-menu-offscreen
         (mf/use-callback
@@ -190,64 +192,100 @@
 
     (when (and open? (some? (:levels @local)))
       [:> dropdown' props
-       
+
        (let [level (-> @local :levels peek)
              original-options (:options level)
              parent-original (:parent-option level)]
-         [:div.context-menu {:class (dom/classnames :is-open open?
-                                                  :fixed fixed?
-                                                  :is-selectable is-selectable)
-                           :style {:top (+ top (:offset-y @local))
-                                   :left (+ left (:offset-x @local))}
-                           :on-key-down (on-key-down original-options parent-original)}
-        (let [level (-> @local :levels peek)]
-          [:ul.context-menu-items {:class (dom/classnames :min-width min-width?)
-                                   :role "menu"
-                                   :ref check-menu-offscreen}
-           (when-let [parent-option (:parent-option level)]
-             [:*
-              [:& context-menu-a11y-item
-               {:id "go-back-sub-option"
-                :tab-index "0"
-                :on-key-down (fn [event]
-                               (dom/prevent-default event))}
-               [:div.context-menu-action.submenu-back
-                {:data-no-close true
-                 :on-click exit-submenu}
-                [:span i/arrow-slide]
-                parent-option]]
-              [:li.separator]])
-           (for [[index option] (d/enumerate (:options level))]
+         [:div {:class (if workspace?
+                         (dom/classnames (css :is-selectable) is-selectable
+                                         (css :context-menu) true
+                                         (css :is-open) open?
+                                         (css :fixed) fixed?)
+                         (dom/classnames :is-selectable is-selectable
+                                         :context-menu true
+                                         :is-open open?
+                                         :fixed fixed?))
+                :style {:top (+ top (:offset-y @local))
+                        :left (+ left (:offset-x @local))}
+                :on-key-down (on-key-down original-options parent-original)}
+          (let [level (-> @local :levels peek)]
+            [:ul {:class (if workspace?
+                           (dom/classnames (css :min-width) min-width?
+                                           (css :context-menu-items) true)
+                           (dom/classnames :min-width min-width?
+                                           :context-menu-items true))
+                  :role "menu"
+                  :ref check-menu-offscreen}
+             (when-let [parent-option (:parent-option level)]
+               [:*
+                [:& context-menu-a11y-item
+                 {:id "go-back-sub-option"
+                  :class (dom/classnames (css :context-menu-item) workspace?)
+                  :tab-index "0"
+                  :on-key-down (fn [event]
+                                 (dom/prevent-default event))}
+                 [:div {:class (if workspace?
+                                 (dom/classnames (css :context-menu-action) true
+                                                 (css :submenu-back) true)
+                                 (dom/classnames :context-menu-action true
+                                                 :submenu-back true))
+                        :data-no-close true
+                        :on-click exit-submenu}
+                  [:span {:class (dom/classnames (css :submenu-icon-back) workspace?)}
+                   (if workspace?
+                     i/arrow-refactor
+                     i/arrow-slide)]
+                  parent-option]]
+                [:li {:class (if workspace?
+                               (dom/classnames (css :separator) true)
+                               (dom/classnames :separator true))}]])
+             (for [[index option] (d/enumerate (:options level))]
+               (let [option-name (:option-name option)
+                     id (:id option)
+                     sub-options (:sub-options option)
+                     option-handler (:option-handler option)
+                     data-test (:data-test option)]
+                 (when option-name
+                   (if (= option-name :separator)
+                     [:li {:key (dm/str "context-item-" index)
+                           :class (if workspace?
+                                    (dom/classnames (css :separator) true)
+                                    (dom/classnames :separator true))}]
+                     [:& context-menu-a11y-item
+                      {:id id
+                       :class (if workspace?
+                                (dom/classnames (css :is-selected) (and selected (= option-name selected))
+                                                (css :context-menu-item) true)
+                                (dom/classnames :is-selected (and selected (= option-name selected))))
+                       :key (dm/str "context-item-" index)
+                       :tab-index "0"
+                       :on-key-down (fn [event]
+                                      (dom/prevent-default event))}
+                      (if-not sub-options
+                        [:a {:class (if workspace?
+                                      (dom/classnames (css :context-menu-action) true)
+                                      (dom/classnames :context-menu-action true))
+                             :on-click #(do (dom/stop-propagation %)
+                                            (on-close)
+                                            (option-handler %))
+                             :data-test data-test}
+                         (if (and in-dashboard? (= option-name "Default"))
+                           (tr "dashboard.default-team-name")
+                           option-name)]
+                        [:a {:class (if workspace?
+                                      (dom/classnames (css :context-menu-action) true
+                                                      (css :submenu) true)
+                                      (dom/classnames :context-menu-action true
+                                                      :submenu true))
+                             :data-no-close true
+                             :on-click (enter-submenu option-name sub-options)
+                             :data-test data-test}
+                         option-name
+                         [:span {:class (dom/classnames (css :submenu-icon) workspace?)}
+                          (if workspace?
+                            i/arrow-refactor
+                            i/arrow-slide)]])]))))])])])))
 
-             (let [option-name (:option-name option)
-                   id (:id option)
-                   sub-options (:sub-options option)
-                   option-handler (:option-handler option)
-                   data-test (:data-test option)]
-               (when option-name
-                 (if (= option-name :separator)
-                   [:li.separator {:key (dm/str "context-item-" index)}]
-                   [:& context-menu-a11y-item
-                    {:id id
-                     :class (dom/classnames :is-selected (and selected (= option-name selected)))
-                     :key (dm/str "context-item-" index)
-                     :tab-index "0"
-                     :on-key-down (fn [event]
-                                    (dom/prevent-default event))}
-                    (if-not sub-options
-                      [:a.context-menu-action {:on-click #(do (dom/stop-propagation %)
-                                                              (on-close)
-                                                              (option-handler %))
-                                               :data-test data-test}
-                       (if (and in-dashboard? (= option-name "Default"))
-                         (tr "dashboard.default-team-name")
-                         option-name)]
-                      [:a.context-menu-action.submenu
-                       {:data-no-close true
-                        :on-click (enter-submenu option-name sub-options)
-                        :data-test data-test}
-                       option-name
-                       [:span i/arrow-slide]])]))))])])])))
 
 (mf/defc context-menu-a11y
   {::mf/wrap-props false}
@@ -255,6 +293,6 @@
   (assert (fn? (gobj/get props "on-close")) "missing `on-close` prop")
   (assert (boolean? (gobj/get props "show")) "missing `show` prop")
   (assert (vector? (gobj/get props "options")) "missing `options` prop")
-  
+
   (when (gobj/get props "show")
     (mf/element context-menu-a11y' props)))

@@ -4,8 +4,9 @@
 ;;
 ;; Copyright (c) KALEIDOS INC
 
-(ns app.main.ui.workspace.context-menu
+(ns app.main.ui.workspace.context-menu.context-menu
   "A workspace specific context menu (mouse right click)."
+  (:require-macros [app.main.style :refer [css styles]])
   (:require
    [app.common.data :as d]
    [app.common.data.macros :as dm]
@@ -27,12 +28,13 @@
    [app.main.refs :as refs]
    [app.main.store :as st]
    [app.main.ui.components.dropdown :refer [dropdown]]
-   [app.main.ui.components.shape-icon :as si]
+   [app.main.ui.components.shape-icon-refactor :as sic]
    [app.main.ui.context :as ctx]
    [app.main.ui.icons :as i]
    [app.util.dom :as dom]
    [app.util.i18n :refer [tr] :as i18n]
    [app.util.timers :as timers]
+   [cuerdas.core :as str]
    [okulary.core :as l]
    [rumext.v2 :as mf]))
 
@@ -75,43 +77,55 @@
          (fn [dom]
            (let [submenu-node (mf/ref-val submenu-ref)]
              (when (and (some? dom) (some? submenu-node))
-               (dom/set-css-property! submenu-node "top" (str (.-offsetTop dom) "px"))))))]
+               (dom/set-css-property! submenu-node "top" (str (.-offsetTop dom) "px"))))))
 
+        split-sc        (fn [sc]
+                          (let [sc (cond-> sc (str/includes? sc "++")
+                                           (str/replace "++" "+plus"))]
+                            (if (= (count sc) 1)
+                              [sc]
+                              (str/split sc #"\+| "))))]
 
     (mf/use-effect
      (mf/deps on-unmount)
      (constantly on-unmount))
 
     (if icon
-      [:li.icon-menu-item {:ref set-dom-node
-                           :on-click on-click
-                           :on-pointer-enter on-pointer-enter
-                           :on-pointer-leave on-pointer-leave}
-       [:span.icon-wrapper
-        (if selected? [:span.selected-icon i/tick]
-            [:span.selected-icon])
-        [:span.shape-icon icon]]
-       [:span.title title]]
-      [:li {:ref set-dom-node
+      [:li {:class (dom/classnames (css :icon-menu-item) true)
+            :ref set-dom-node
             :on-click on-click
             :on-pointer-enter on-pointer-enter
             :on-pointer-leave on-pointer-leave}
-       [:span.title title]
-       [:span.shortcut (or shortcut "")]
+       [:span
+        {:class (dom/classnames (css :icon-wrapper) true)}
+        (if selected? [:span {:class (dom/classnames (css :selected-icon) true)} i/tick-refactor]
+            [:span {:class (dom/classnames (css :selected-icon) true)}])
+        [:span {:class (dom/classnames (css :shape-icon) true)} icon]]
+       [:span {:class (dom/classnames (css :title) true)} title]]
+      [:li {:class (dom/classnames (css :context-menu-item) true)
+            :ref set-dom-node
+            :on-click on-click
+            :on-pointer-enter on-pointer-enter
+            :on-pointer-leave on-pointer-leave}
+       [:span {:class (dom/classnames (css :title) true)} title]
+       (when shortcut
+         [:span   {:class (dom/classnames (css :shortcut) true)}
+          (for [sc (split-sc shortcut)]
+            [:span {:class (dom/classnames (css :shortcut-key) true)} sc])])
 
        (when (> (count children) 1)
-         [:span.submenu-icon i/arrow-slide])
+         [:span {:class (dom/classnames (css :submenu-icon) true)} i/arrow-refactor])
 
        (when (> (count children) 1)
-         [:ul.workspace-context-menu
-          {:ref submenu-ref
+         [:ul
+          {:class (dom/classnames (css :workspace-context-submenu) true)
+           :ref submenu-ref
            :style {:display "none" :left 250}
            :on-context-menu prevent-default}
           children])])))
-
 (mf/defc menu-separator
   []
-  [:li.separator])
+  [:li {:class (dom/classnames (css :separator) true)}])
 
 (mf/defc context-menu-edit
   []
@@ -165,7 +179,7 @@
                           :on-pointer-enter (on-pointer-enter (:id object))
                           :on-pointer-leave (on-pointer-leave (:id object))
                           :on-unmount (on-unmount (:id object))
-                          :icon (si/element-icon {:shape object})}])])
+                          :icon (sic/element-icon-refactor {:shape object})}])])
      [:& menu-entry {:title (tr "workspace.shape.menu.forward")
                      :shortcut (sc/get-tooltip :bring-forward)
                      :on-click do-bring-forward}]
@@ -336,14 +350,18 @@
     [:*
      (if (every? :hidden shapes)
        [:& menu-entry {:title (tr "workspace.shape.menu.show")
+                       :shortcut (sc/get-tooltip :toggle-visibility)
                        :on-click do-show-shape}]
        [:& menu-entry {:title (tr "workspace.shape.menu.hide")
+                        :shortcut (sc/get-tooltip :toggle-visibility)
                        :on-click do-hide-shape}])
 
      (if (every? :blocked shapes)
        [:& menu-entry {:title (tr "workspace.shape.menu.unlock")
+                        :shortcut (sc/get-tooltip :toggle-lock)
                        :on-click do-unlock-shape}]
        [:& menu-entry {:title (tr "workspace.shape.menu.lock")
+                        :shortcut (sc/get-tooltip :toggle-lock)
                        :on-click do-lock-shape}])]))
 
 (mf/defc context-menu-prototype
@@ -597,14 +615,14 @@
 
     [:& dropdown {:show (boolean mdata)
                   :on-close #(st/emit! dw/hide-context-menu)}
-     [:ul.workspace-context-menu
-      {:ref dropdown-ref
+     [:ul
+      {:class (dom/classnames (css :workspace-context-menu) true)
+       :ref dropdown-ref
        :style {:top top :left left}
        :on-context-menu prevent-default}
 
       (if (contains? mdata :selected)
         [:& shape-context-menu {:mdata mdata}]
         [:& viewport-context-menu {:mdata mdata}])]]))
-
 
 

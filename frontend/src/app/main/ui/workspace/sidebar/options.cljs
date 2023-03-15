@@ -12,7 +12,7 @@
    [app.main.data.workspace :as udw]
    [app.main.refs :as refs]
    [app.main.store :as st]
-   [app.main.ui.components.tab-container :refer [tab-container tab-element]]
+   [app.main.ui.components.tabs-container :refer [tabs-container tab-element]]
    [app.main.ui.context :as ctx]
    [app.main.ui.viewer.inspect.right-sidebar :as hrs]
    [app.main.ui.workspace.sidebar.options.menus.align :refer [align-options]]
@@ -87,7 +87,7 @@
             (st/emit! :interrupt (udw/set-workspace-read-only false))))]
     [:div.tool-window
      [:div.tool-window-content
-      [:& tab-container {:on-change-tab on-change-tab
+      [:& tabs-container {:on-change-tab on-change-tab
                          :selected section}
        [:& tab-element {:id :design
                         :title (tr "workspace.options.design")}

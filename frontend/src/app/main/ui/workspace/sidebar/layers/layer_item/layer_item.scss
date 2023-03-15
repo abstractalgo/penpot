@@ -1,0 +1,353 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) KALEIDOS INC
+
+@import "refactor/common-refactor.scss";
+
+:global(.layer-row) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  background-color: var(--layer-row-background-color);
+
+  .element-list-body {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    width: 100%;
+    .button-content {
+      display: flex;
+      height: 100%;
+      .toggle-content {
+        @include buttonStyle;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        height: 100%;
+        width: $spacing-24;
+        padding: 0 4px 0 8px;
+        svg {
+          @extend .button-icon-small;
+        }
+        &.inverse {
+          svg {
+            transform: rotate(90deg);
+          }
+          .icon-shape {
+            transform: rotate(-90deg);
+          }
+        }
+      }
+      .icon-shape {
+        @include flexCenter;
+        @include buttonStyle;
+        position: relative;
+        justify-self: flex-end;
+        width: $spacing-16;
+        height: 100%;
+        width: $spacing-24;
+        padding: 0 8px 0 4px;
+        svg {
+          @extend .button-icon-small;
+        }
+
+        & .absolute {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: $spacing-16;
+          height: $spacing-16;
+
+          svg {
+            @extend .button-icon-small;
+            stroke-opacity: 0.5;
+          }
+        }
+      }
+    }
+    .element-actions {
+      display: flex;
+      height: 100%;
+      padding-right: $spacing-4;
+      .toggle-element,
+      .block-element {
+        @include buttonStyle;
+        @include flexCenter;
+        height: 100%;
+        width: $spacing-24;
+        margin: 0;
+        display: none;
+        svg {
+          @extend .button-icon-small;
+        }
+      }
+      &.selected {
+        .toggle-element,
+        .block-element {
+          display: flex;
+          opacity: 0;
+          &.selected {
+            opacity: 100%;
+          }
+        }
+      }
+    }
+  }
+  .element-children {
+    width: 100%;
+    ul {
+      margin-bottom: 0;
+    }
+    &.parent-selected {
+      .layer-row {
+        background-color: var(--layer-child-row-background-color);
+      }
+    }
+  }
+  &:global(.hidden) {
+    .element-list-body {
+      .button-content {
+        .toggle-content {
+          svg {
+            opacity: 0.7;
+          }
+        }
+        .icon-shape {
+          svg {
+            opacity: 0.7;
+          }
+          & .absolute {
+            svg {
+              opacity: 0.7;
+            }
+          }
+        }
+      }
+      .element-actions {
+        .toggle-element,
+        .block-element {
+          svg {
+            opacity: 0.7;
+          }
+        }
+      }
+    }
+  }
+  &:global(.selected) {
+    background-color: var(--layer-row-background-color-selected);
+    .element-list-body {
+      .button-content {
+        .toggle-content {
+          background-color: var(--layer-row-background-color-selected);
+          svg {
+            stroke: var(--layer-row-foreground-color-selected);
+          }
+        }
+        .icon-shape {
+          svg {
+            stroke: var(--layer-row-foreground-color-selected);
+          }
+          & .absolute {
+            svg {
+              stroke: var(--layer-row-foreground-color-selected);
+            }
+          }
+        }
+      }
+      .element-actions {
+        .toggle-element,
+        .block-element {
+          display: flex;
+          svg {
+            stroke: var(--layer-row-foreground-color-selected);
+          }
+        }
+        &.selected {
+          .toggle-element,
+          .block-element {
+            display: flex;
+            opacity: 100%;
+            &.selected {
+              opacity: 100%;
+            }
+          }
+        }
+      }
+    }
+    .element-children {
+      background-color: transparent;
+      color: var(--layer-row-foreground-color-selected);
+      &:hover {
+        background-color: var(--layer-row-background-color-selected);
+      }
+    }
+  }
+  &:hover {
+    background-color: var(--layer-row-background-color-hover);
+    &.hidden {
+      opacity: 100%;
+    }
+    .element-list-body {
+      .button-content {
+        .toggle-content {
+          background-color: var(--layer-row-background-color-hover);
+          svg {
+            stroke: var(--layer-row-foreground-color-hover);
+          }
+        }
+        .icon-shape {
+          svg {
+            stroke: var(--layer-row-foreground-color-hover);
+          }
+          & .absolute {
+            svg {
+              stroke: var(--layer-row-foreground-color-hover);
+            }
+          }
+        }
+      }
+      .element-actions {
+        .toggle-element,
+        .block-element {
+          display: flex;
+          svg {
+            stroke: var(--layer-row-foreground-color-hover);
+          }
+        }
+        &.selected {
+          .toggle-element,
+          .block-element {
+            opacity: 100%;
+          }
+        }
+      }
+    }
+    .element-children {
+      .layer-row {
+        background-color: transparent;
+        color: var(--layer-row-foreground-color-hover);
+        &:hover {
+          background-color: var(--layer-row-background-color-hover);
+        }
+      }
+    }
+  }
+  &:global(.type-comp) {
+    .button-content {
+      .toggle-content {
+        svg {
+          stroke: var(--layer-row-component-foreground-color);
+        }
+      }
+      .icon-shape {
+        svg {
+          stroke: var(--layer-row-component-foreground-color);
+        }
+        & .absolute {
+          svg {
+            stroke: var(--layer-row-component-foreground-color);
+          }
+        }
+      }
+    }
+    .element-actions {
+      .toggle-element,
+      .block-element {
+        svg {
+          stroke: var(--layer-row-component-foreground-color);
+        }
+      }
+    }
+    .element-children {
+      color: var(--layer-row-component-foreground-color);
+    }
+    &:gloabl(.hidden) {
+      .element-list-body {
+        .button-content {
+          .toggle-content {
+            opacity: 0.7;
+          }
+          .icon-shape {
+            opacity: 0.7;
+
+            & .absolute {
+              opacity: 0.7;
+            }
+          }
+        }
+        .element-actions {
+          .toggle-element,
+          .block-element {
+            svg {
+              opacity: 0.7;
+            }
+          }
+        }
+      }
+    }
+  }
+  &:global(.sticky) {
+    position: sticky;
+    top: 0px;
+    z-index: 3;
+  }
+}
+:global(.parent-selected) :global(.layer-row) {
+  background-color: var(--layer-child-row-background-color);
+  &:hover {
+    background-color: var(--layer-row-background-color-hover);
+    &.hidden {
+      opacity: 100%;
+    }
+    .element-list-body {
+      .button-content {
+        .toggle-content {
+          background-color: var(--layer-row-background-color-hover);
+          svg {
+            stroke: var(--layer-row-foreground-color-hover);
+          }
+        }
+        .icon-shape {
+          svg {
+            stroke: var(--layer-row-foreground-color-hover);
+          }
+          & .absolute {
+            svg {
+              stroke: var(--layer-row-foreground-color-hover);
+            }
+          }
+        }
+      }
+      .element-actions {
+        .toggle-element,
+        .block-element {
+          display: flex;
+          svg {
+            stroke: var(--layer-row-foreground-color-hover);
+          }
+        }
+        &.selected {
+          .toggle-element,
+          .block-element {
+            opacity: 100%;
+          }
+        }
+      }
+    }
+    .element-children :global(.layer-row) {
+      background-color: transparent;
+      color: var(--layer-row-foreground-color-hover);
+      &:hover {
+        background-color: var(--layer-row-background-color-hover);
+      }
+    }
+  }
+}
+.tab-indentation {
+  display: block;
+  height: $spacing-16;
+  min-width: calc(var(--depth) * var(--layer-indentation-size));
+}

@@ -4,8 +4,17 @@
 //
 // Copyright (c) KALEIDOS INC
 
-$spacing-4: 0.25rem;
+@use "sass:math";
+
+:root {
+  --spacing-4: 0.25rem;
+  --layer-indentation-size: calc(var(--spacing-4) * 5);
+}
+
+$spacing-2: math.div(0.25rem, 2);
+$spacing-4: var(--spacing-4);
 $spacing-8: calc(var(--spacing-4) * 2);
+$spacing-6: calc($spacing-2 + $spacing-4);
 $spacing-12: calc(var(--spacing-4) * 3);
 $spacing-16: calc(var(--spacing-4) * 4);
 $spacing-20: calc(var(--spacing-4) * 5);
@@ -24,3 +33,8 @@ $spacing-68: calc(var(--spacing-4) * 17);
 $spacing-72: calc(var(--spacing-4) * 18);
 $spacing-76: calc(var(--spacing-4) * 19);
 $spacing-80: calc(var(--spacing-4) * 20);
+$spacing-96: calc(var(--spacing-4) * 24);
+$spacing-152: calc(var(--spacing-4) * 38);
+$spacing-192: calc(var(--spacing-4) * 48);
+$spacing-240: calc(var(--spacing-4) * 60);
+$spacing-480: calc(var(--spacing-4) * 120);

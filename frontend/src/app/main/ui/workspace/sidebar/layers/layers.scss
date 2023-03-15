@@ -1,0 +1,304 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) KALEIDOS INC
+
+@import "refactor/common-refactor.scss";
+
+.layers {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  box-sizing: border-box;
+  .tool-window-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: $spacing-32;
+    margin-top: $spacing-8;
+    margin-bottom: $spacing-4;
+    .page-name {
+      @include titleTipography;
+      padding: 0 $spacing-12;
+      color: var(--title-foreground-color);
+    }
+    .icon-search {
+      @extend .button-primary;
+      height: $spacing-32;
+      width: $spacing-24;
+      border-radius: $br8;
+      margin-right: $spacing-12;
+      svg {
+        @extend .button-icon-small;
+        margin: 0;
+      }
+    }
+    &.search {
+      padding: 0 $spacing-12;
+      .search-box {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: $spacing-2;
+        height: $spacing-32;
+        width: 100%;
+        margin-right: $spacing-4;
+        border-radius: $br8;
+        background-color: var(--color-background-primary);
+        .filter-button {
+          @include flexCenter;
+          @include buttonStyle;
+          height: $spacing-32;
+          width: $spacing-32;
+          margin: 0;
+          border: 1px solid var(--color-background-tertiary);
+          border-radius: $br8 $br2 $br2 $br8;
+          background-color: var(--color-background-tertiary);
+          svg {
+            height: $spacing-16;
+            width: $spacing-16;
+            stroke: var(--icon-foreground);
+          }
+          &:focus {
+            border: 1px solid var(--input-border-color-focus);
+            outline: 0;
+            background-color: var(--input-background-color-active);
+            color: var(--input-foreground-color-active);
+            svg {
+              background-color: var(--input-background-color-active);
+            }
+          }
+          &:hover {
+            border: 1px solid var(--input-background-color-hover);
+            background-color: var(--input-background-color-hover);
+            svg {
+              background-color: var(--input-background-color-hover);
+              stroke: var(--button-foreground-hover);
+            }
+          }
+        }
+        .search-input-wrapper {
+          @include flexCenter;
+          height: $spacing-32;
+          width: 100%;
+          border: 1px solid var(--color-background-tertiary);
+          border-radius: $br2 $br8 $br8 $br2;
+          background-color: var(--color-background-tertiary);
+          input {
+            width: 100%;
+            margin: $spacing-8;
+            border: 0;
+            background-color: var(--input-background-color);
+            font-size: $fs-12;
+            color: var(--input-foreground-color);
+            &:focus {
+              outline: none;
+            }
+          }
+          &:hover {
+            border: 1px solid var(--input-background-color-hover);
+            background-color: var(--input-background-color-hover);
+            input {
+              background-color: var(--input-background-color-hover);
+            }
+          }
+          &:focus-within {
+            background-color: var(--input-background-color-active);
+            color: var(--input-foreground-color-active);
+            border: 1px solid var(--input-border-color-focus);
+            input {
+              background-color: var(--input-background-color-active);
+            }
+          }
+
+          .clear {
+            @extend .button-secondary;
+            border-radius: $br8;
+            height: 100%;
+            svg {
+              @extend .button-icon-small;
+              color: transparent;
+            }
+          }
+        }
+      }
+      .close-search {
+        @extend .button-primary;
+        height: $spacing-32;
+        width: $spacing-28;
+        border-radius: $br8;
+        svg {
+          @extend .button-icon-small;
+        }
+      }
+    }
+    .focus-title {
+      @include buttonStyle;
+      display:grid;
+      grid-template-columns: auto 1fr auto;
+      width: 100%;
+      padding: 0;
+      .back-button-icon{
+        @include flexCenter;
+        height: $spacing-32;
+        width: $spacing-24;
+        padding: 0 $spacing-4 0 $spacing-8;
+        svg {
+          @extend .button-icon-small;
+          transform: rotate(180deg);
+        }
+      }
+      .focus-name {
+        @include titleTipography;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding-left: $spacing-4;
+        color: var(--title-foreground-color);
+      }
+      .focus-mode-tag-wrapper {
+        @include flexCenter;
+        height: 100%;
+        margin-right: $spacing-12;
+
+        .focus-mode-tag {
+          @include flexCenter;
+          @include titleTipography;
+          height: $spacing-20;
+          padding: $spacing-4 $spacing-6;
+          border: 1px solid var(--tag-background-color);
+          border-radius: $br6;
+          color: var(--tag-background-color);
+        }
+      }
+    }
+  }
+  .active-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $spacing-4;
+    margin: 0 $spacing-12;
+    .layer-filter {
+      @extend .button-secondary;
+      @include buttonStyle;
+      gap: $spacing-4;
+      height: $spacing-24;
+      border-radius: $br6;
+      background-color: var(--pill-background-color);
+      cursor: pointer;
+      .layer-filter-icon,
+      .layer-filter-close {
+        @extend .button-icon-small;
+        stroke: var(--pill-foreground-color);
+        svg {
+          height: $spacing-12;
+        }
+      }
+      .layer-filter-name {
+        @include flexCenter;
+        @include buttonSmallTipography;
+        color: var(--pill-foreground-color);
+      }
+    }
+  }
+  .filters-container {
+    position: absolute;
+    top: $spacing-44;
+    left: $spacing-12;
+    display: flex;
+    flex-direction: column;
+    width: $spacing-192;
+    padding: $spacing-4;
+    border-radius: $br8;
+    background-color: var(--menu-background-color);
+    z-index: $z-index-1;
+    box-shadow: 0px 0px 10px 0px var(--menu-shadow-color);
+    .filter-menu-item {
+      @include titleTipography;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: $spacing-6;
+      border-radius: $br8;
+
+      .filter-menu-item-name-wrapper {
+        display: flex;
+        align-items: center;
+        gap: $spacing-4;
+        .filter-menu-item-icon {
+          svg {
+            @extend .button-icon-small;
+            stroke: var(--menu-foreground-color);
+          }
+        }
+        .filter-menu-item-name {
+          color: var(--menu-foreground-color);
+        }
+      }
+      .filter-menu-item-tick {
+        svg {
+          @extend .button-icon-small;
+          stroke: var(--menu-foreground-color);
+        }
+      }
+
+      &.selected {
+        background-color: var(--menu-background-color-selected);
+        .filter-menu-item-name-wrapper {
+          .filter-menu-item-icon {
+            svg {
+              stroke: var(--menu-foreground-color-selected);
+            }
+          }
+          .filter-menu-item-name {
+            color: var(--menu-foreground-color-selected);
+          }
+        }
+        .filter-menu-item-tick {
+          svg {
+            stroke: var(--menu-foreground-color-selected);
+          }
+        }
+      }
+
+      &:hover {
+        background-color: var(--menu-background-color-hover);
+        .filter-menu-item-name-wrapper {
+          .filter-menu-item-icon {
+            svg {
+              stroke: var(--menu-foreground-color-hover);
+            }
+          }
+          .filter-menu-item-name {
+            color: var(--menu-foreground-color-hover);
+          }
+        }
+        .filter-menu-item-tick {
+          svg {
+            stroke: var(--menu-foreground-color-hover);
+          }
+        }
+      }
+    }
+  }
+  .tool-window-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    overflow-y: overlay;
+    margin-top: $spacing-4;
+    .element-list {
+      width: 100%;
+    }
+  }
+}
+
+
+
