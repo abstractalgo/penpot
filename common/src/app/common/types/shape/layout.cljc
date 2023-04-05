@@ -8,6 +8,7 @@
   (:require
    [app.common.data :as d]
    [app.common.data.macros :as dm]
+   [app.common.math :as mth]
    [app.common.spec :as us]
    [app.common.uuid :as uuid]
    [clojure.spec.alpha :as s]))
@@ -63,9 +64,9 @@
 
 (s/def :grid-cell/id uuid?)
 (s/def :grid-cell/area-name ::us/string)
-(s/def :grid-cell/row-start ::us/safe-integer)
+(s/def :grid-cell/row ::us/safe-integer)
 (s/def :grid-cell/row-span ::us/safe-integer)
-(s/def :grid-cell/column-start ::us/safe-integer)
+(s/def :grid-cell/column ::us/safe-integer)
 (s/def :grid-cell/column-span ::us/safe-integer)
 (s/def :grid-cell/position #{:auto :manual :area})
 (s/def :grid-cell/align-self #{:auto :start :end :center :stretch})
@@ -74,9 +75,9 @@
 
 (s/def ::grid-cell (s/keys :opt-un [:grid-cell/id
                                     :grid-cell/area-name
-                                    :grid-cell/row-start
+                                    :grid-cell/row
                                     :grid-cell/row-span
-                                    :grid-cell/column-start
+                                    :grid-cell/column
                                     :grid-cell/column-span
                                     :grid-cell/position ;; auto, manual, area
                                     :grid-cell/align-self
@@ -523,6 +524,10 @@
 
 (declare assign-cells)
 
+(def default-track-value
+  {:type :fixed
+   :value 100})
+
 (def grid-cell-defaults
   {:row-span 1
    :column-span 1
@@ -538,7 +543,7 @@
   [parent value]
   (us/assert ::grid-definition value)
   (let [rows (:layout-grid-rows parent)
-        new-col-num (count (:layout-grid-columns parent))
+        new-col-num (inc (count (:layout-grid-columns parent)))
 
         layout-grid-cells
         (->> (d/enumerate rows)
@@ -576,14 +581,54 @@
         (update :layout-grid-rows (fnil conj []) value)
         (assoc :layout-grid-cells layout-grid-cells))))
 
-;; TODO: Remove a track and its corresponding cells. We need to reassign the orphaned shapes into not-tracked cells
+
+;; TODO: SPAN NOT CHECK!!
+(defn make-remove-track
+  [attr track-num]
+  (comp #(= % track-num) attr second))
+
+(defn make-decrease-track-num
+  [attr track-num]
+  (fn [[key value]]
+    (let [new-val
+          (cond-> value
+            (> (get value attr) track-num)
+            (update attr dec))]
+      [key new-val])))
+
 (defn remove-grid-column
-  [parent _index]
-  parent)
+  [parent index]
+  (let [track-num (inc index)
+
+        decrease-track-num (make-decrease-track-num :column track-num)
+        remove-track? (make-remove-track :column track-num)
+
+        remove-cells
+        (fn [cells]
+          (into {} (comp
+                    (remove remove-track?)
+                    (map decrease-track-num)) cells))]
+    (-> parent
+        (update :layout-grid-columns d/remove-at-index index)
+        (update :layout-grid-cells remove-cells)
+        (assign-cells))))
 
 (defn remove-grid-row
-  [parent _index]
-  parent)
+  [parent index]
+  (let [track-num (inc index)
+
+        decrease-track-num (make-decrease-track-num :row track-num)
+        remove-track? (make-remove-track :row track-num)
+
+        remove-cells
+        (fn [cells]
+          (into {} (comp
+                    (remove remove-track?)
+                    (map decrease-track-num)) cells))]
+    (-> parent
+        (update :layout-grid-rows d/remove-at-index index)
+        (update :layout-grid-cells remove-cells)
+        (assign-cells))))
 
 ;; TODO: Mix the cells given as arguments leaving only one. It should move all the shapes in those cells in the direction for the grid
 ;; and lastly use assign-cells to reassing the orphaned shapes
@@ -591,10 +636,38 @@
   [parent _cells]
   parent)
 
+(defn get-free-cells
+  ([parent]
+   (get-free-cells parent nil))
+
+  ([{:keys [layout-grid-cells layout-grid-dir]} {:keys [sort?] :or {sort? false}}]
+   (let [comp-fn (if (= layout-grid-dir :row)
+                   (juxt :row :column)
+                   (juxt :column :row))
+
+         maybe-sort?
+         (if sort? (partial sort-by (comp comp-fn second)) identity)]
+
+     (->> layout-grid-cells
+          (filter (comp empty? :shapes second))
+          (maybe-sort?)
+          (map first)))))
+
+(defn check-deassigned-cells
+  "Clean the cells whith shapes that are no longer in the layout"
+  [parent]
+
+  (let [child? (into #{} (:shapes parent))
+        cells (update-vals
+               (:layout-grid-cells parent)
+               (fn [cell] (update cell :shapes #(filterv child? %))))]
+
+    (assoc parent :layout-grid-cells cells)))
 
 ;; TODO
 ;; Assign cells takes the children and move them into the allotted cells. If there are not enough cells it creates
 ;; not-tracked rows/columns and put the shapes there
+;;   Non-tracked tracks need to be deleted when they are empty and there are no more shapes unallocated
 ;; Should be caled each time a child can be added like:
 ;;  - On shape creation
 ;;  - When moving a child from layers
@@ -603,9 +676,51 @@
 ;;  - (maybe) create group/frames. This case will assigna a cell that had one of its children
 (defn assign-cells
   [parent]
-  #_(let [allocated-shapes
-        (into #{} (mapcat :shapes) (:layout-grid-cells parent))
+  (let [parent (-> parent check-deassigned-cells)
+
+        shape-has-cell?
+        (into #{} (mapcat (comp :shapes second)) (:layout-grid-cells parent))
 
         no-cell-shapes
-        (->> (:shapes parent) (remove allocated-shapes))])
-  parent)
+        (->> (:shapes parent) (remove shape-has-cell?))]
+
+    (if (empty? no-cell-shapes)
+      ;; All shapes are within a cell. No need to assign
+      parent
+
+      (let [;; We need to have at least 1 col and 1 row otherwise we can't assign
+            parent
+            (cond-> parent
+              (empty? (:layout-grid-columns parent))
+              (add-grid-column default-track-value)
+
+              (empty? (:layout-grid-rows parent))
+              (add-grid-row default-track-value))
+
+            ;; Free cells should be ordered columns/rows depending on the parameter
+            ;; in the parent
+            free-cells (get-free-cells parent)
+
+            to-add-tracks
+            (if (= (:layout-grid-dir parent) :row)
+              (mth/ceil (/ (- (count no-cell-shapes) (count free-cells)) (count (:layout-grid-columns parent))))
+              (mth/ceil (/ (- (count no-cell-shapes) (count free-cells)) (count (:layout-grid-rows parent)))))
+
+            add-track (if (= (:layout-grid-dir parent) :row) add-grid-row add-grid-column)
+
+            parent
+            (->> (range to-add-tracks)
+                 (reduce #(add-track %1 default-track-value) parent))
+
+            [pending-shapes cells]
+            (loop [cells (:layout-grid-cells parent)
+                   free-cells (get-free-cells parent {:sort? true})
+                   pending no-cell-shapes]
+              (if (or (empty? free-cells) (empty? pending))
+                [pending cells]
+                (let [next-free (first free-cells)
+                      current (first pending)
+                      cells (update-in cells [next-free :shapes] conj current)]
+                  (recur cells (rest free-cells) (rest pending)))))]
+
+        (assoc parent :layout-grid-cells cells)))))

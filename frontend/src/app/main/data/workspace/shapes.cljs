@@ -106,8 +106,7 @@
                           (cond-> (some? (:parent-id attrs))
                             (pcb/change-parent (:parent-id attrs) [shape]))
                           (cond-> (ctl/grid-layout? objects (:parent-id shape))
-                            (pcb/update-shapes [(:parent-id shape)] ctl/assign-cells))
-                          )
+                            (pcb/update-shapes [(:parent-id shape)] ctl/assign-cells)))
              undo-id (js/Symbol)]
 
          (rx/concat
