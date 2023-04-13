@@ -111,14 +111,19 @@
   [s]
   (-> s schema m/validator))
 
+(defn explainer
+  [s]
+  (-> s schema m/explainer))
+
 (defmacro lazy-validator
   [s]
   `(let [vfn# (delay (validator ~s))]
      (fn [v#] (@vfn# v#))))
 
-(defn explainer
+(defmacro lazy-explainer
   [s]
-  (-> s schema m/explainer))
+  `(let [vfn# (delay (explainer ~s))]
+     (fn [v#] (@vfn# v#))))
 
 (defn encode
   ([s val transformer]
@@ -195,79 +200,43 @@
      :schema sname
      :line (:line (meta form))}))
 
-
-(def ^:private validator-cache (atom {}))
-(def ^:private explainer-cache (atom {}))
-
-(defn resolve-validator
-  {:no-doc true}
-  [id]
-  (or (get @validator-cache id)
-      (-> (swap! validator-cache (fn [cache]
-                                   (assoc cache id (validator id))))
-          (get id))))
-
-(defn resolve-explainer
-  {:no-doc true}
-  [id]
-  (or (get @explainer-cache id)
-      (-> (swap! explainer-cache (fn [cache]
-                                   (assoc cache id (explainer id))))
-          (get id))))
-
-(defmacro assert-schema!
-  [& [s value hint]]
-  (let [sname   (pr-str s)
-        context (get-assert-context &env &form sname)
-        hint    (or hint (str "schema assert: " sname))]
-    `(let [v# ~value s# ~s]
-       (if (keyword? s#)
-         (let [validate-fn# (resolve-validator s#)]
-           (if (validate-fn# v#)
-             v#
-             (let [explain-fn# (resolve-explainer s#)
-                   explain     (explain-fn# v#)]
-               (throw (ex-info ~hint
-                               (into {:type :assertion
-                                      :code :data-validation
-                                      :hint ~hint
-                                      ::explain (explain s# v#)}
-                                     ~context))))))
-         (let [s# (schema ~s)]
-           (if (validate s# v#)
-             v#
-             (throw (ex-info ~hint
-                             (into {:type :assertion
-                                    :code :data-validation
-                                    :hint ~hint
-                                    ::explain (explain s# v#)}
-                                   ~context)))))))))
-
-;; (defmacro assert-expr!
-;;   [& [expr hint]]
-;;   (let [hint (or hint (str "expr assert: " (pr-str expr)))]
-;;     `(when-not ~expr
-;;        (throw (rx-info ~hint
-;;                        {:type :assertion
-;;                         :code :expr-validation
-;;                         :hint ~hint})))))
-
 (defmacro assert!
-  [& [expr :as params]]
-  (if (or (keyword? expr)
-          (vector? expr)
-          (symbol? expr))
-    (when *assert*
-      `(do :nothing))
-    (throw (ex-info "invalid arguments" {}))))
+  [& [s value hint]]
+  (when *assert*
+    `(let [s# (schema ~s)
+           v# ~value
+           h# ~(or hint (str "schema assert: " (pr-str s)))
+           c# ~(get-assert-context &env &form (pr-str s))]
+       (if (validate s# v#)
+         v#
+         (let [exp#  (explain s# v#)
+               data# {:type :assertion
+                      :code :data-validation
+                      :hint h#
+                      ::explain exp#}]
+           (throw (ex-info h# (into data# c#))))))))
 
+(defmacro assert-fn
+  [s]
+  (if *assert*
+    `(let [s#    (schema ~s)
+           v-fn# (lazy-validator s#)
+           e-fn# (lazy-explainer s#)]
+       (fn [v#]
+         (when-not (v-fn# v#)
+           (let [hint# ~(str "schema assert: " (pr-str s))
+                 exp#  (e-fn# v#)]
+             (throw (ex-info hint#
+                             {:type :assertion
+                              :code :data-validation
+                              :hint hint#
+                              ::explain exp#}))))))
+    `(constantly nil)))
 
-;; (assert-schema! ~@params))
-
-
-;; ;; (list? expr)
-;; ;; (when *assert*
-;; ;;   `(assert-expr! ~@params))
+(defmacro verify-fn
+  [s]
+  (binding [*assert* true]
+    `(assert-fn ~s)))
 
 (defmacro verify!
   "A variant of `assert!` macro that evaluates always, independently
@@ -281,7 +250,8 @@
     (swap! sr/registry assoc type s)))
 
 (defn def! [type s]
-  (register! type s))
+  (register! type s)
+  nil)
 
 ;; --- GENERATORS
 

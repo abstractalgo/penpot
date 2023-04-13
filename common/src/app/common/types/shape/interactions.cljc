@@ -236,17 +236,17 @@
 
 ;; FIXME: generator generates invalid data
 (sm/def! ::interaction
-  [:multi {:dispatch :event-action}
+  [:multi {:dispatch :action-type}
    [:navigate
     [:map
-     [:event-action [:= :navigate]]
+     [:action-type [:= :navigate]]
      [:event-type [::sm/one-of event-types]]
      [:destination {:optional true} [:maybe ::sm/uuid]]
      [:preserve-scroll {:optional true} :boolean]
      [:animation ::animation]]]
    [:open-overlay
     [:map
-     [:event-action [:= :open-overlay]]
+     [:action-type [:= :open-overlay]]
      [:event-type [::sm/one-of event-types]]
      [:overlay-position ::gpt/point]
      [:overlay-pos-type [::sm/one-of overlay-positioning-type]]
@@ -257,7 +257,7 @@
      [:position-relative-to {:optional true} [:maybe ::sm/uuid]]]]
    [:toggle-overlay
     [:map
-     [:event-action [:= :toggle-overlay]]
+     [:action-type [:= :toggle-overlay]]
      [:event-type [::sm/one-of event-types]]
      [:overlay-position ::gpt/point]
      [:overlay-pos-type [::sm/one-of overlay-positioning-type]]
@@ -268,18 +268,18 @@
      [:position-relative-to {:optional true} [:maybe ::sm/uuid]]]]
    [:close-overlay
     [:map
-     [:event-action [:= :close-overlay]]
+     [:action-type [:= :close-overlay]]
      [:event-type [::sm/one-of event-types]]
      [:destination {:optional true} [:maybe ::sm/uuid]]
      [:animation ::animation]
      [:position-relative-to {:optional true} [:maybe ::sm/uuid]]]]
    [:prev-screen
     [:map
-     [:event-action [:= :prev-screen]]
+     [:action-type [:= :prev-screen]]
      [:event-type [::sm/one-of event-types]]]]
    [:open-url
     [:map
-     [:event-action [:= :open-url]]
+     [:action-type [:= :open-url]]
      [:event-type [::sm/one-of event-types]]
      [:url :string]]]])
 
