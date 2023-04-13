@@ -6,6 +6,7 @@
 
 (ns app.main.ui.workspace.viewport.grid-layout-editor
   (:require
+   [app.main.ui.workspace.viewport.viewport-ref :as uwvv]
    [app.common.data :as d]
    [app.common.data.macros :as dm]
    [app.common.geom.point :as gpt]
@@ -154,18 +155,20 @@
         (mf/use-callback
          (mf/deps on-drag-start)
          (fn [event]
-           (let [position (dom/get-client-position event)]
+           (let [raw-pt (dom/get-client-position event)
+                 position (uwvv/point->viewport raw-pt)]
              (dom/capture-pointer event)
              (mf/set-ref-val! dragging-ref true)
-             (mf/set-ref-val! start-pos-ref position)
-             (mf/set-ref-val! current-pos-ref position)
+             (mf/set-ref-val! start-pos-ref raw-pt)
+             (mf/set-ref-val! current-pos-ref raw-pt)
              (when on-drag-start (on-drag-start position)))))
 
         handle-lost-pointer-capture
         (mf/use-callback
          (mf/deps on-drag-end)
          (fn [event]
-           (let [position (mf/ref-val current-pos-ref)]
+           (let [raw-pt (mf/ref-val current-pos-ref)
+                 position (uwvv/point->viewport raw-pt)]
              (dom/release-pointer event)
              (mf/set-ref-val! dragging-ref false)
              (mf/set-ref-val! start-pos-ref nil)
@@ -176,10 +179,11 @@
          (fn [event]
            (when (mf/ref-val dragging-ref)
              (let [start (mf/ref-val start-pos-ref)
-                   pos   (dom/get-client-position event)]
+                   pos   (dom/get-client-position event)
+                   pt (uwvv/point->viewport pos)]
                (mf/set-ref-val! current-pos-ref pos)
                (when on-drag-delta (on-drag-delta (gpt/to-vec start pos)))
-               (when on-drag-position (on-drag-position pos))))))]
+               (when on-drag-position (on-drag-position pt))))))]
 
     {:handle-pointer-down handle-pointer-down
      :handle-lost-pointer-capture handle-lost-pointer-capture
@@ -195,13 +199,13 @@
         direction (unchecked-get props "direction")
         cursor (if (= direction :row) (cur/scale-ns 0) (cur/scale-ew 0))
 
-        handle-drag-delta
+        handle-drag-position
         (mf/use-callback
-         (fn [delta]
-           (prn ">>>" delta)))
+         (fn [position]
+           (prn ">>>" position)))
 
         {:keys [handle-pointer-down handle-lost-pointer-capture handle-pointer-move]}
-        (use-drag {:on-drag-delta handle-drag-delta})]
+        (use-drag {:on-drag-position handle-drag-position})]
 
     [:rect
      {:x x

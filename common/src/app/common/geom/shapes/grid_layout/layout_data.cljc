@@ -190,9 +190,6 @@
         bound-width  (gpo/width-points layout-bounds)
         bound-corner (gpo/origin layout-bounds)
 
-        grid-columns (:layout-grid-columns parent)
-        grid-rows    (:layout-grid-rows parent)
-
         [row-gap column-gap] (ctl/gaps parent)
 
         ;; Map shape->cell
@@ -205,11 +202,11 @@
 
         ;; Initialize tracks
         column-tracks
-        (->> grid-columns
+        (->> (:layout-grid-columns parent)
              (mapv (partial calculate-initial-track-size bound-width)))
 
         row-tracks
-        (->> grid-rows
+        (->> (:layout-grid-rows parent)
              (mapv (partial calculate-initial-track-size bound-height)))
 
         ;; Go through cells to adjust auto sizes for span=1. Base is the max of its children
