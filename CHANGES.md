@@ -8,6 +8,9 @@
 
 ### :bug: Bugs fixed
 
+- Fix project file count [Taiga
+  #5148](https://tree.taiga.io/project/penpot/issue/5148)
+
 ### :arrow_up: Deps updates
 
 ### :heart: Community contributions by (Thank you!)
