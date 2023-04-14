@@ -8,6 +8,8 @@
 
 ### :bug: Bugs fixed
 
+- Fix page context menu [Taiga #5145](https://tree.taiga.io/project/penpot/issue/5145)
+
 ### :arrow_up: Deps updates
 
 ### :heart: Community contributions by (Thank you!)
